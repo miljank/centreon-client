@@ -1,4 +1,0 @@
-centreon-client
-===============
-
-Centreon automation

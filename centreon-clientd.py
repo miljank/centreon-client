@@ -29,8 +29,9 @@ import json
 import socket
 import subprocess
 import SocketServer
-from   time     import sleep
-from   optparse import OptionParser
+from   time      import sleep
+from   optparse  import OptionParser
+from   threading import Timer
 
 SocketServer.TCPServer.allow_reuse_address = True
 
@@ -48,7 +49,7 @@ def get_cmd_options():
 
     (opts, args) = cmd_line.parse_args()
 
-    return opt
+    return opts
 
 class TCPHandler(SocketServer.BaseRequestHandler):
     """Connection handler. Takes the user request, performs a basic sanity check and
@@ -135,6 +136,7 @@ class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
         """
         self.debug  = debug
         self.config = config
+        self.config.timer = ReloadTimer()
 
 class Centreon(object):
     """A class that wraps around Centreon command line API. It performs most the actions
@@ -444,10 +446,10 @@ class Centreon(object):
 
         # Do not deploy config automatically
         #if not self.cfg_generate():
-        #    return False
+        #   return False
         #
-        # if not self.cfg_test():
-        #     return False
+        #if not self.cfg_test():
+        #    return False
         #
         #if not self.cfg_move():
         #    return False
@@ -602,6 +604,22 @@ class Status(object):
         """
         return json.dumps(self.status)
 
+class ReloadTimer(object):
+    """Timer class for sharing reload status among threads.
+    """
+    def __init__(self):
+        self.timer = False
+
+    def set(self, status):
+        """Set timer status
+        """
+        self.timer = status
+
+    def get(self):
+        """Get timer status
+        """
+        return self.timer
+
 class CentreonObject(object):
     """Prototype class defining all the methods for Centreon objects.
     Methods defined in this class should be implemented in classes
@@ -673,6 +691,7 @@ class Host(CentreonObject):
         super(Host, self).__init__(config, status)
         self.data     = self.__parse_input(data)
         self.centreon = Centreon(self.data, self.status)
+        self.wait_for_reload = 30 * 60
 
     def __parse_input(self, data):
         """This method is used for parsing user input.
@@ -710,6 +729,11 @@ class Host(CentreonObject):
             except socket.gaierror:
                 self.status.set('error', "Cannot resolve hostname '{0}'".format(data['name']))
                 return False
+
+            if not 'reload_poller' in data:
+                data['reload_poller'] = False
+            if not 'reload_poller_now' in data:
+                data['reload_poller_now'] = False
 
         if data['operation'] == 'update':
             if 'timezone' not in data or type(data['timezone']) != int:
@@ -749,7 +773,7 @@ class Host(CentreonObject):
     def add(self):
         """Adds a new object to Centreon.
         """
-        if not self.data and not self.data['templates']:
+        if not self.data or not self.data['templates']:
             return False
 
         if self.centreon.host_is_defined(self.data['name']):
@@ -759,7 +783,50 @@ class Host(CentreonObject):
         if not self.centreon.add_host(self.data):
             return False
 
+        if self.data['reload_poller']:
+            if not self.__reload_poller():
+                return False
+
         self.status.set('ok', {'name': self.data['name']})
+
+    def __config_reload(self):
+        """Generates, tests, deploys new configuration for
+        a poller and then does a reload
+        """
+        if not self.centreon.cfg_generate():
+            return False
+
+        if not self.centreon.cfg_test():
+            return False
+
+        if not self.centreon.cfg_move():
+           return False
+
+        if not self.centreon.poller_reload():
+           return False
+
+        self.status.set('ok', {'name': self.data['poller']})
+        return True
+
+    def __config_reload_timer(self):
+        """Used with a delayed reload. It reloads the poller
+        with a new configuration and resets the timer.
+        """
+        self.__config_reload()
+        self.config.timer.set(False)
+
+    def __reload_poller(self):
+        """Reloads the poller with new configuration either
+        immediately or with a delay
+        """
+        if self.data['reload_poller_now']:
+            return self.__config_reload()
+        else:
+            if not self.config.timer.get():
+                self.config.timer.set(True)
+                Timer(self.wait_for_reload, self.__config_reload_timer).start()
+
+        return True
 
 class HostGroup(CentreonObject):
     """Manages HOSTGROUP objects.

@@ -81,7 +81,9 @@ def get_cmd_options():
     parser.add_option('-r', '--raw',      dest="raw",        help="Do not format output, print raw JSON response instead.", action="store_true", default=False)
 
     host = OptionGroup(parser, "Host options", "These options can be used to register or remove a host.")
-    host.add_option("-t", "--template", dest="templates", help="Colon delimited list of templates to use for this host.")
+    parser.add_option("-t", "--template", dest="templates",         help="Colon delimited list of templates to use for this host.")
+    parser.add_option("--reload-poller",  dest="reload_poller",     help="Sync configuration to the poller and reload. If not used with --now, reload will be scheduled to run in 30 minutes.", action="store_true", default=False)
+    parser.add_option("--now",            dest="reload_poller_now", help="Used with --reload-poller in order to sync and reload configuration of a poller right away.", action="store_true", default=False)
     parser.add_option_group(host)
 
     downtime = OptionGroup(parser, "Downtime options", "These options can be used to set, list and remove host downtimes.")
@@ -113,6 +115,10 @@ def get_cmd_options():
         print("[error] Operation is not supported.")
         sys.exit(1)
     opts.operation = args[1]
+
+    if not opts.api_server:
+        print("[error] API server is not defined.")
+        sys.exit(1)
 
     return opts
 
@@ -312,10 +318,12 @@ class Host(CentreonObject):
                 "password":  self.options.password}
 
         if self.options.operation == 'add':
-            data["poller"]    = self.options.poller
-            data["name"]      = self.options.name
-            data["timezone"]  = self.options.timezone
-            data["templates"] = self.options.templates
+            data["poller"]            = self.options.poller
+            data["name"]              = self.options.name
+            data["timezone"]          = self.options.timezone
+            data["templates"]         = self.options.templates
+            data["reload_poller"]     = self.options.reload_poller
+            data["reload_poller_now"] = self.options.reload_poller_now
 
         elif self.options.operation == 'update':
             data["name"] = self.options.name

@@ -13,17 +13,22 @@ What is Centreon Client?
 Centreon Client is a wrapper around Centreon command line API. It allows for remote management of your Centreon configuration.
 
 ======
+Installation
+======
+Copy centreond folder to your Python path and files from bin folder to your UNIX path.
+
+======
 Usage
 ======
 
-centreon-clientd.py is the server part. It needs to run on the same server as Centreon with Centreon Command Line API installed.
+centreond is the server part. It needs to run on the same server as Centreon with Centreon Command Line API installed.
 
-centreon-client.py is the client part and it can run anywhere.
+centreon-client is the client part and it can run anywhere.
 
 ::
 
-    $ centreon-client.py host info -h
-    Usage: centreon-client.py [object] [operation] [options]
+    $ centreon-client host info -h
+    Usage: centreon-client [object] [operation] [options]
 
     Objects:
         host            Host actions.
@@ -102,17 +107,17 @@ When adding a host, if the client is local (hostname is not specified) it will t
 
 ::
 
-    $ centreon-client.py host info
+    $ centreon-client host info
     [error] Host is not defined 'server1'
 
 ::
 
-    $ centreon-client.py host add -p eu-poller -t mysql
+    $ centreon-client host add -p eu-poller -t mysql
     [ok] Object added 'server1'
 
 ::
 
-    $ centreon-client.py host info
+    $ centreon-client host info
     [ok] Details for host server1:
 
     Host templates:
@@ -131,7 +136,7 @@ At this time, it is not possible to change the host configuration. Only exceptio
 
 ::
 
-    $ centreon-client.py host update -n server1 -z 7
+    $ centreon-client host update -n server1 -z 7
     [ok] Object updated 'server1'
 
 *******
@@ -140,7 +145,7 @@ Hostgroup
 
 ::
 
-    $ centreon-client.py hostgroup list
+    $ centreon-client hostgroup list
     [ok] Hostgroup list:
         linux
         mysql
@@ -148,7 +153,7 @@ Hostgroup
 
 ::
 
-    $ centreon-client.py hostgroup info -n linux
+    $ centreon-client hostgroup info -n linux
     [ok] Hostgroup details:
         server1
         server2
@@ -160,7 +165,7 @@ For convenience you can change timezone on all the hosts in a hostgroup.
 
 ::
 
-    $ centreon-client.py hostgroup update -n linux -z 7
+    $ centreon-client hostgroup update -n linux -z 7
     [ok] Object updated 'linux'
 
 *******
@@ -171,7 +176,7 @@ Contacts can be update with a timezone as well.
 
 ::
 
-    $ centreon-client.py contact update -n user1 -z 7
+    $ centreon-client contact update -n user1 -z 7
     [ok] Object updated 'user1'
 
 *******
@@ -179,7 +184,7 @@ Contact group
 *******
 ::
 
-    $ centreon-client.py contactgroup list
+    $ centreon-client contactgroup list
     [ok] Contact group list:
         database_team
         developers
@@ -188,7 +193,7 @@ Contact group
 
 ::
 
-    $ centreon-client.py contactgroup info -n server_team
+    $ centreon-client contactgroup info -n server_team
     [ok] Contact group details:
         user1
         user2
@@ -200,7 +205,7 @@ For convenience you can change timezone on all the contacts in a contact group.
 
 ::
 
-    $ centreon-client.py contactgroup update -n server_team -z 7
+    $ centreon-client contactgroup update -n server_team -z 7
     [ok] Object updated 'server_team'
 
 *******
@@ -208,7 +213,7 @@ Downtime
 *******
 ::
 
-    $ centreon-client.py downtime add -n server2 -m 'Down for maintenance' -d 30
+    $ centreon-client downtime add -n server2 -m 'Down for maintenance' -d 30
     [ok] Added downtime for 'server2' with duration of '30' minutes.
 
 *******
@@ -216,11 +221,11 @@ Configuration
 *******
 ::
 
-    $ centreon-client.py config test -p eu-poller
+    $ centreon-client config test -p eu-poller
     [ok] Poller configuration passed the test: 'eu-poller'
 
 ::
 
-    $ centreon-client.py config deploy -p eu-poller
+    $ centreon-client config deploy -p eu-poller
     [ok] Poller configuration deployed: 'eu-poller'
 

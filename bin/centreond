@@ -1,0 +1,74 @@
+#!/usr/bin/env python
+
+"""
+Server part of Centreon automation.
+
+Copyright 2013 Miljan Karadzic. (miljank@gmail.com)
+
+This file is part of Centreon Client.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+import sys
+from optparse import OptionParser
+from centreond.logger import Logger
+from centreond.daemon import Daemonize
+from centreond.tcpserver import TCPHandler
+from centreond.tcpserver import ThreadedTCPServer
+
+
+conf = {}
+
+
+def get_cmd_options():
+    usage = "usage: %prog [-i IP/HOSTNAME] [-p PORT] [-h]"
+
+    cmd_line = OptionParser(usage=usage)
+    cmd_line.add_option("-i", "--interface", dest="interface", default="0.0.0.0",
+                        help="IP/Hostname to bind to. Default: all interfaces")
+
+    cmd_line.add_option("-p", "--port", dest="port", default=9997,
+                        help="Port to listen on. Default: 9997", type="int")
+
+    cmd_line.add_option("-d", "--debug", dest="debug", default=False,
+                        action="store_true", help="Extra logging")
+
+    (opt, args) = cmd_line.parse_args()
+
+    opt.logger = Logger(log_file='/var/log/centreon-clientd.log',
+                        daemon=not opt.debug,
+                        debug=opt.debug)
+
+    return opt
+
+
+def start(options, run):
+    try:
+        server = ThreadedTCPServer((options.interface, options.port), TCPHandler)
+        server.set_env(config=options)
+        server.logger.info("Server ready.")
+        server.serve_forever()
+        server.shutdown()
+    except:
+        sys.exit(1)
+
+    sys.exit(0)
+
+if __name__ == "__main__":
+    options = get_cmd_options()
+    if not options.debug:
+        Daemonize([start], options, pid_file='/var/run/centreond.pid')
+    else:
+        start(options, True)

@@ -62,8 +62,8 @@ Config operations:
 
 
 def get_cmd_options():
-    objects = ['host', 'hostgroup', 'downtime', 'contact', 'contactgroup', 'config', 'attr', 'server']
-    operations = ['add', 'info', 'update', 'list', 'test', 'deploy', 'remove', 'values', 'stop']
+    objects = ['host', 'hostgroup', 'downtime', 'contact', 'contactgroup', 'config', 'server']
+    operations = ['add', 'info', 'update', 'list', 'test', 'deploy', 'values', 'stop']
     parser = OptionParser(usage=usage)
 
     parser.add_option("-x", "--api", dest="api_server", default="centreon",
@@ -94,11 +94,6 @@ def get_cmd_options():
     downtime.add_option("-d", "--duration", dest="duration", type="int",
                         help="Downtime duration in minutes.",)
     parser.add_option_group(downtime)
-
-    attrs = OptionGroup(parser, "Attribute options", "These options can be used to set, list and remove host attributes.")
-    attrs.add_option("-a", "--attribute", dest="attribute",
-                     help="Reason for attrs.")
-    parser.add_option_group(attrs)
 
     auth = OptionGroup(parser, "Authentication options", "These options can be used to set authentication parameters.")
     auth.add_option("-u", "--username", dest="username", default="admin",

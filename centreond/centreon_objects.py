@@ -42,6 +42,10 @@ class Host(CentreonObject):
     def __init__(self, config, status, data, logger=None):
         super(Host, self).__init__(config, status, logger=logger)
         self.data = self.__parse_input(data)
+
+        if not self.data:
+            return None
+
         self.centreon = Centreon(self.data, self.status, logger=self.logger)
         self.wait_for_reload = 30 * 60
 
@@ -294,6 +298,10 @@ class Downtime(CentreonObject):
     def __init__(self, config, status, data, logger=None):
         super(Downtime, self).__init__(config, status, logger=logger)
         self.data = self.__parse_input(data)
+
+        if not self.data:
+            return None
+
         self.centreon = Centreon(self.data, self.status, logger=self.logger)
 
     def __parse_input(self, data):

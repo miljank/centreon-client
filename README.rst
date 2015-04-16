@@ -87,6 +87,8 @@ centreon-client is the client part and it can run anywhere.
       Downtime options:
         These options can be used to set, list and remove host downtimes.
 
+        -s SERVICE, --service=SERVICE
+                            Service to set to downtime.
         -m MESSAGE, --message=MESSAGE
                             Reason for downtime.
         -d DURATION, --duration=DURATION
@@ -215,6 +217,9 @@ Downtime
 
     $ centreon-client downtime add -n server2 -m 'Down for maintenance' -d 30
     [ok] Added downtime for 'server2' with duration of '30' minutes.
+
+    $ centreon-client downtime add -n server3 -m 'Down for maintenance' -d 45 -s Memory
+    [ok] Added downtime for 'server3:Memory' with duration of '45' minutes.
 
 *******
 Configuration

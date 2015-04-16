@@ -89,6 +89,8 @@ def get_cmd_options():
     parser.add_option_group(host)
 
     downtime = OptionGroup(parser, "Downtime options", "These options can be used to set, list and remove host downtimes.")
+    downtime.add_option("-s", "--service", dest="service",
+                        help="Service to set to downtime.")
     downtime.add_option("-m", "--message", dest="message",
                         help="Reason for downtime.")
     downtime.add_option("-d", "--duration", dest="duration", type="int",

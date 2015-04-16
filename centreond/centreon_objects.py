@@ -333,6 +333,9 @@ class Downtime(CentreonObject):
             self.status.set("error", "Downtime duration should be an integer")
             return False
 
+        if 'type' not in data:
+            data['type'] = 'host'
+
         return data
 
     def add(self):
@@ -346,8 +349,17 @@ class Downtime(CentreonObject):
         self.centreon.poller = poller['name']
         self.centreon.poller_id = poller['id']
 
-        self.centreon.add_downtime(self.data)
-        self.status.set('ok', {'name': self.data['name'], 'duration': self.data['duration'] / 60})
+        if self.data['type'] == 'host':
+            self.centreon.add_host_downtime(self.data)
+            self.status.set('ok', {'name': self.data['name'], 'duration': self.data['duration'] / 60})
+
+        elif self.data['type'] == 'service':
+            self.centreon.add_service_downtime(self.data)
+            self.status.set('ok', {'name': '{0}:{1}'.format(self.data['name'], self.data['service']),
+                                   'duration': self.data['duration'] / 60})
+
+        else:
+            self.status.set('error', 'Unknown downtime type.')
 
 
 class Config(CentreonObject):

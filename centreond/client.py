@@ -531,6 +531,11 @@ class Downtime(CentreonObject):
                 print("[error] Downtime duration is required.")
                 sys.exit(1)
 
+            if options.service:
+                options.type = 'service'
+            else:
+                options.type = 'host'
+
         return options
 
     def parse_add(self, response):
@@ -544,6 +549,8 @@ class Downtime(CentreonObject):
 
     def __format_data(self):
         data = {"object":    self.options.object,
+                "type": self.options.type,
+                "service": self.options.service,
                 "operation": self.options.operation,
                 "username":  self.options.username,
                 "password":  self.options.password}

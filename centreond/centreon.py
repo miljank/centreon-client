@@ -36,8 +36,8 @@ class Centreon(object):
                          'get_attrs':          '-o host -a getattrs -v',
                          'get_attr_vals':      '-o host -a getattrvals -v'}
 
-        self.uid = 81
-        self.gid = 81
+        self.uid = 501
+        self.gid = 501
         self.cmd_file = '/var/lib/centreon/centcore.cmd'
 
         if 'poller' in self.data and self.data['poller']:
@@ -285,7 +285,23 @@ class Centreon(object):
 
         return True
 
-    def add_downtime(self, data):
+    def __add_downtime(self, downtimes):
+        if os.path.isfile(self.cmd_file):
+            with open(self.cmd_file, 'a') as f:
+                for downtime in downtimes:
+                    f.write(downtime)
+                f.close()
+
+        else:
+            with open(self.cmd_file, 'w') as f:
+                for downtime in downtimes:
+                    f.write(downtime)
+                f.close()
+
+            os.chown(self.cmd_file, self.uid, self.gid)
+            os.chmod(self.cmd_file, 0644)
+
+    def add_host_downtime(self, data):
         start = self.__get_time()
         end = start + data['duration']
 
@@ -305,19 +321,23 @@ class Centreon(object):
                                                                                                           data['duration'],
                                                                                                           data['username'],
                                                                                                           data['message'])
-        if os.path.isfile(self.cmd_file):
-            with open(self.cmd_file, 'a') as f:
-                f.write(host_cmd)
-                f.write(svc_cmd)
-                f.close()
-        else:
-            with open(self.cmd_file, 'w') as f:
-                f.write(host_cmd)
-                f.write(svc_cmd)
-                f.close()
-            os.chown(self.cmd_file, self.uid, self.gid)
-            os.chmod(self.cmd_file, 0644)
+        self.__add_downtime([host_cmd, svc_cmd])
+        return True
 
+    def add_service_downtime(self, data):
+        start = self.__get_time()
+        end = start + data['duration']
+
+        svc_cmd = "EXTERNALCMD:{0}:[{1}] SCHEDULE_SVC_DOWNTIME;{2};{3};{4};{5};1;0;{6};{7};{8}\n".format(self.poller_id,
+                                                                                                         start,
+                                                                                                         data['name'],
+                                                                                                         data['service'],
+                                                                                                         start,
+                                                                                                         end,
+                                                                                                         data['duration'],
+                                                                                                         data['username'],
+                                                                                                         data['message'])
+        self.__add_downtime([svc_cmd])
         return True
 
     def get_host_info(self, host):
